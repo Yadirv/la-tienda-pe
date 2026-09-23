@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | Zonas de Cobertura</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <style>
+        body { font-family: 'Montserrat', sans-serif; }
+        #map { height: calc(100vh - 64px); } /* 64px es el header */
+    </style>
+</head>
+<body class="bg-gray-50 flex flex-col h-screen overflow-hidden">
+
+    <!-- Header -->
+    <header class="h-16 bg-[linear-gradient(135deg,#004E4A_0%,#005955_50%,#004E4A_100%)] flex items-center justify-between px-6 shadow-md z-10 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-[#54B435] rounded-lg flex items-center justify-center shadow-lg">
+                <span class="text-white font-bold">L</span>
+            </div>
+            <h1 class="text-white font-bold text-lg">Panel Admin - Zonas de Cobertura</h1>
+        </div>
+        <button id="btn-logout" class="text-white/80 hover:text-white transition-colors text-sm font-medium">Cerrar Sesión</button>
+    </header>
+
+    <!-- Main Content -->
+    <div class="flex flex-1 overflow-hidden">
+        
+        <!-- Sidebar -->
+        <aside class="w-80 bg-white shadow-xl flex flex-col z-10">
+            <div class="p-6 overflow-y-auto flex-1">
+                <h2 class="text-lg font-bold text-gray-800 mb-4">Cargar Capas</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Municipio</label>
+                        <select id="select-municipio" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#54B435] outline-none">
+                            <option value="">Cargando municipios...</option>
+                        </select>
+                    </div>
+
+                    <button id="btn-load-layer" class="w-full bg-gray-800 text-white font-medium py-2 rounded-lg hover:bg-gray-900 transition-colors">
+                        Cargar Barrios
+                    </button>
+                    <button id="btn-load-zones" class="w-full bg-blue-600 text-white font-medium py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        🗺️ Ver Zonas Activas
+                    </button>
+                    
+                    <div id="loading-indicator" class="hidden text-sm text-center text-blue-600 font-medium py-2">
+                        Descargando mapa desde el Catastro...
+                    </div>
+                </div>
+
+                <hr class="my-6 border-gray-100">
+
+                <h2 class="text-lg font-bold text-gray-800 mb-4">Zonas Seleccionadas</h2>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Promoción</label>
+                    <select id="select-promocion" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#54B435] outline-none mb-4">
+                        <option value="DOMICILIO_GRATIS">Domicilio Gratis</option>
+                        <option value="RECARGO_EXTENDIDO">Recargo Extendido</option>
+                        <option value="NO_COBERTURA">Sin Cobertura</option>
+                        <option value="ADS_PREMIUM_BRANDS">Ads: Marcas Premium</option>
+                    </select>
+                </div>
+
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 min-h-[150px] max-h-[300px] overflow-y-auto mb-4">
+                    <ul id="selected-list" class="space-y-2 text-sm">
+                        <li class="text-gray-400 italic text-center py-4">Haz clic en el mapa para seleccionar barrios</li>
+                    </ul>
+                </div>
+
+            </div>
+            
+            <div class="p-6 border-t border-gray-100 bg-white">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de Caducidad Global (para esta promoción)</label>
+                    <input type="date" id="input-fecha-caducidad" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#54B435] outline-none text-sm">
+                </div>
+                <button id="btn-save" class="w-full bg-[#54B435] text-white font-bold py-3 rounded-xl hover:bg-[#439628] transition-colors shadow-lg disabled:opacity-50 flex items-center justify-center gap-2">
+                    Guardar Selección
+                </button>
+                <div id="save-status" class="text-center mt-2 text-sm font-medium hidden"></div>
+            </div>
+        </aside>
+
+        <!-- Map Area -->
+        <main class="flex-1 relative">
+            <div id="map" class="w-full h-full"></div>
+            <!-- Contenedor para Leyenda Flotante -->
+            <div id="map-legend" class="absolute bottom-6 right-6 z-[1000] bg-white rounded-lg shadow-xl border border-gray-200 p-4 min-w-[200px] hidden">
+                <h3 class="font-bold text-sm text-gray-800 mb-2 border-b pb-1">Tipos de Promoción</h3>
+                <ul id="legend-list" class="space-y-2 text-xs">
+                </ul>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Configuración de Supabase
+        const SUPABASE_URL = "https://qkzhopjfrlyvqfievcfi.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_B8kxChkEQRWA32IFAWNLXA_viGXj1Yo";
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Helper para convertir el nombre de DB a nombre de archivo (ej: "LA ESTRELLA" -> "la-estrella")
+        function getGeojsonPath(munDb) {
+            if (!munDb) return '';
+            const key = munDb.toLowerCase().replace(/\s+/g, '-');
+            return `/data/geojson/${key}.geojson`;
+        }
+
+        // Estado Global
+        let map = null;
+        let geojsonLayer = null;
+        let savedLayer = null; // Capa secundaria para pintar TODO lo existente en la DB
+        let selectedFeatures = new Map(); // Key: barrio_name, Value: {municipio, barrio, fecha_caducidad}
+        
+        // Colores por tipo de promoción
+        const PROMO_COLORS = {
+            'DOMICILIO_GRATIS':   { color: '#22c55e', label: '🟢 Gratis' },
+            'RECARGO_EXTENDIDO':  { color: '#f97316', label: '🟠 Recargo' },
+            'NO_COBERTURA':       { color: '#ef4444', label: '🔴 Sin cobertura' },
+            'ADS_PREMIUM_BRANDS': { color: '#a855f7', label: '🟣 Ads' }
+        };
+        
+        // Elementos UI
+        const btnLogout = document.getElementById('btn-logout');
+        const selectMunicipio = document.getElementById('select-municipio');
+        const btnLoadLayer = document.getElementById('btn-load-layer');
+        const btnLoadZones = document.getElementById('btn-load-zones');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const selectedList = document.getElementById('selected-list');
+        const selectPromocion = document.getElementById('select-promocion');
+        const inputFechaCaducidad = document.getElementById('input-fecha-caducidad');
+        const btnSave = document.getElementById('btn-save');
+        const saveStatus = document.getElementById('save-status');
+        const mapLegend = document.getElementById('map-legend');
+        const legendList = document.getElementById('legend-list');
+
+        // 1. Verificación de Autenticación
+        async function checkSession() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = '/admin/';
+            }
+        }
+        
+        async function init() {
+            await checkSession();
+            await loadMunicipiosFromDB();
+            initMap();
+        }
+        init();
+
+        btnLogout.addEventListener('click', async () => {
+            await supabaseClient.auth.signOut();
+            window.location.href = '/admin/';
+        });
+
+        async function loadMunicipiosFromDB() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('petpro_barrios')
+                    .select('municipio')
+                    .order('municipio', { ascending: true });
+                
+                if (error) throw error;
+                
+                const uniqueMuns = [...new Set((data || []).map(r => r.municipio.trim().toUpperCase()))];
+                
+                selectMunicipio.innerHTML = '<option value="">Selecciona un municipio...</option>';
+                const DISPLAY_NAMES = {
+                    'MEDELLIN': 'Medellín', 'BELLO': 'Bello', 'ITAGUI': 'Itagüí',
+                    'ENVIGADO': 'Envigado', 'SABANETA': 'Sabaneta',
+                    'LA ESTRELLA': 'La Estrella', 'CALDAS': 'Caldas'
+                };
+                
+                uniqueMuns.forEach(mun => {
+                    const opt = document.createElement('option');
+                    opt.value = mun; // Formato normalizado base de datos
+                    opt.textContent = DISPLAY_NAMES[mun] || mun;
+                    selectMunicipio.appendChild(opt);
+                });
+            } catch (err) {
+                console.error("Error cargando municipios:", err);
+                selectMunicipio.innerHTML = '<option value="">Error cargando. Reintenta.</option>';
+            }
+        }
+
+        // 3. Inicializar el mapa
+        function initMap() {
+            map = L.map('map').setView([6.2442, -75.5812], 12); // Centro en Medellín por defecto
+            
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(map);
+        }
+
+        // 3. Estilos de Capas
+        const defaultStyle = {
+            color: "#3b82f6", // Blue border
+            weight: 2,
+            opacity: 0.6,
+            fillColor: "#3b82f6",
+            fillOpacity: 0.1
+        };
+
+        const selectedStyle = {
+            color: "#54B435", // Green border
+            weight: 3,
+            opacity: 1,
+            fillColor: "#54B435",
+            fillOpacity: 0.4
+        };
+
+        // 4. Lógica de Interacción con el Mapa
+        function onEachFeature(feature, layer) {
+            // Intentar detectar el nombre del barrio usando la llave estandarizada
+            const props = feature.properties;
+            const barrioName = props.nombre_barrio_estandarizado || props.NOMBRE || props.BARRIO || props.NOM_BARRIO || props.nombre || props.barrio || "Desconocido";
+            feature.properties._normalized_name = barrioName; // Guardar para fácil acceso
+
+            // Tooltip hover
+            layer.bindTooltip(barrioName, {
+                permanent: false,
+                direction: "center",
+                className: "bg-white px-2 py-1 shadow-md rounded border border-gray-200 text-sm font-bold"
+            });
+
+            // Restablecer estilo según estado de selección
+            const municipio = selectMunicipio.value;
+            const uniqueId = `${municipio}_${barrioName}`;
+            
+            if (selectedFeatures.has(uniqueId)) {
+                layer.setStyle(selectedStyle);
+            } else {
+                layer.setStyle(defaultStyle);
+            }
+
+            // Evento Click (Modo Edición)
+            layer.on('click', function (e) {
+                if (selectedFeatures.has(uniqueId)) {
+                    selectedFeatures.delete(uniqueId);
+                    layer.setStyle(defaultStyle);
+                } else {
+                    selectedFeatures.set(uniqueId, {
+                        municipio: municipio,
+                        barrio: barrioName,
+                        tipo_promocion: selectPromocion.value
+                    });
+                    layer.setStyle(selectedStyle);
+                }
+                updateSelectedListUI();
+            });
+        }
+
+        function updateSelectedListUI() {
+            if (selectedFeatures.size === 0) {
+                selectedList.innerHTML = `<li class="text-gray-400 italic text-center py-4">Sin barrios seleccionados. Al guardar se limpiará la promoción en este municipio.</li>`;
+                btnSave.disabled = false;
+                return;
+            }
+
+            btnSave.disabled = false;
+            selectedList.innerHTML = '';
+            
+            selectedFeatures.forEach((data, key) => {
+                const li = document.createElement('li');
+                li.className = "flex flex-col bg-white p-3 rounded border border-gray-100 shadow-sm gap-2";
+                const badgeColor = PROMO_COLORS[data.tipo_promocion]?.color || '#999';
+                const badgeLabel = PROMO_COLORS[data.tipo_promocion]?.label || data.tipo_promocion;
+                li.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-gray-700">${data.barrio}</span>
+                            <span class="text-xs text-gray-500 capitalize">${data.municipio}</span>
+                        </div>
+                        <button class="text-red-500 hover:text-red-700 p-1" onclick="removeFeature('${key}')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between mt-1">
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full text-white" style="background-color:${badgeColor}">${badgeLabel}</span>
+                    </div>
+                `;
+                selectedList.appendChild(li);
+            });
+        }
+
+        // Exponer función de borrado global
+        window.removeFeature = function(key) {
+            selectedFeatures.delete(key);
+            updateSelectedListUI();
+            // Re-render layers to update style
+            if (geojsonLayer) {
+                geojsonLayer.eachLayer(layer => {
+                    const uniqueId = `${selectMunicipio.value}_${layer.feature.properties._normalized_name}`;
+                    if (uniqueId === key) {
+                        layer.setStyle(defaultStyle);
+                    }
+                });
+            }
+        };
+
+        // -----------------------------------------------------------
+        // LÓGICA DE CAPAS GUARDADAS
+        // -----------------------------------------------------------
+        async function loadSavedFeatures(municipio, promocion) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('petpro_zonas_cobertura')
+                    .select('barrio, fecha_caducidad')
+                    .eq('municipio', municipio)
+                    .eq('tipo_promocion', promocion);
+                    
+                if (error) throw error;
+                
+                selectedFeatures.clear();
+                let lastFecha = '';
+                
+                if (data && data.length > 0) {
+                    data.forEach(row => {
+                        const barrio = row.barrio.toUpperCase();
+                        const uniqueId = `${municipio}_${barrio}`;
+                        selectedFeatures.set(uniqueId, {
+                            municipio: municipio,
+                            barrio: barrio,
+                            tipo_promocion: promocion
+                        });
+                        if (row.fecha_caducidad) lastFecha = row.fecha_caducidad;
+                    });
+                }
+                
+                // Actualizar input global de fecha
+                inputFechaCaducidad.value = lastFecha;
+                
+                updateSelectedListUI();
+                
+                if (geojsonLayer) {
+                    geojsonLayer.eachLayer(layer => {
+                        const bName = layer.feature.properties._normalized_name;
+                        const uId = `${municipio}_${bName}`;
+                        if (selectedFeatures.has(uId)) {
+                            layer.setStyle(selectedStyle);
+                        } else {
+                            layer.setStyle(defaultStyle);
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error("Error al cargar barrios guardados:", err);
+            }
+        }
+
+        selectPromocion.addEventListener('change', () => {
+            const municipio = selectMunicipio.value;
+            if (municipio) {
+                loadSavedFeatures(municipio, selectPromocion.value);
+                // Ocultar zonas activas globales al cambiar de tipo de promo
+                if (savedLayer) {
+                    map.removeLayer(savedLayer);
+                    savedLayer = null;
+                }
+                mapLegend.classList.add('hidden');
+            }
+        });
+
+        async function loadAllSavedFeatures(municipio) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('petpro_zonas_cobertura')
+                    .select('barrio, tipo_promocion, fecha_caducidad')
+                    .eq('municipio', municipio);
+
+                if (error) throw error;
+
+                if (savedLayer) {
+                    map.removeLayer(savedLayer);
+                }
+
+                // Cargar el geojson base
+                const geojsonUrl = getGeojsonPath(municipio);
+                if (!geojsonUrl) return;
+
+                const response = await fetch(geojsonUrl);
+                const geojson = await response.json();
+
+                // Llenar dbMap pero NO sobreescribir selectedFeatures, ya que selectedFeatures es manejado por loadSavedFeatures
+                const dbMap = new Map();
+                data.forEach(r => {
+                    dbMap.set(r.barrio.toUpperCase(), r);
+                });
+                
+                // Set para la leyenda
+                const activeTypes = new Set();
+
+                savedLayer = L.geoJSON(geojson, {
+                    filter: function(feature) {
+                        const props = feature.properties;
+                        const bName = (props.nombre_barrio_estandarizado || props.NOMBRE || props.BARRIO || props.NOM_BARRIO || props.nombre || props.barrio || "Desconocido").toUpperCase();
+                        return dbMap.has(bName);
+                    },
+                    style: function(feature) {
+                        const bName = (feature.properties.nombre_barrio_estandarizado || feature.properties.NOMBRE || feature.properties.BARRIO || feature.properties.NOM_BARRIO || feature.properties.nombre || feature.properties.barrio || "Desconocido").toUpperCase();
+                        const dbInfo = dbMap.get(bName);
+                        if (dbInfo) {
+                            activeTypes.add(dbInfo.tipo_promocion);
+                            const conf = PROMO_COLORS[dbInfo.tipo_promocion];
+                            return {
+                                color: conf ? conf.color : '#999',
+                                weight: 2,
+                                opacity: 1,
+                                fillColor: conf ? conf.color : '#999',
+                                fillOpacity: 0.3
+                            };
+                        }
+                    },
+                    onEachFeature: function(feature, layer) {
+                        const bName = (feature.properties.nombre_barrio_estandarizado || feature.properties.NOMBRE || feature.properties.BARRIO || feature.properties.NOM_BARRIO || feature.properties.nombre || feature.properties.barrio || "Desconocido").toUpperCase();
+                        const dbInfo = dbMap.get(bName);
+                        if (dbInfo) {
+                            const conf = PROMO_COLORS[dbInfo.tipo_promocion];
+                            const label = conf ? conf.label : dbInfo.tipo_promocion;
+                            const vencimiento = dbInfo.fecha_caducidad ? `<br><span style="color:#d97706">Vence: ${dbInfo.fecha_caducidad}</span>` : '';
+                            layer.bindTooltip(`<b>${bName}</b><br>${label}${vencimiento}`, {
+                                permanent: false,
+                                className: "bg-white px-2 py-1 shadow-md rounded border border-gray-200 text-sm"
+                            });
+                        }
+                    }
+                }).addTo(map);
+
+                renderLegend(activeTypes);
+                
+                // Enviar la capa base al fondo si existe para que los colores resalten
+                if (geojsonLayer) {
+                    savedLayer.bringToFront();
+                }
+
+            } catch (err) {
+                console.error("Error al cargar zonas activas:", err);
+            }
+        }
+
+        function renderLegend(activeTypes) {
+            if (activeTypes.size === 0) {
+                mapLegend.classList.add('hidden');
+                return;
+            }
+            
+            legendList.innerHTML = '';
+            activeTypes.forEach(type => {
+                const conf = PROMO_COLORS[type];
+                if (conf) {
+                    const li = document.createElement('li');
+                    li.className = "flex items-center gap-2";
+                    li.innerHTML = `<span class="w-3 h-3 rounded-full" style="background-color: ${conf.color}"></span><span>${conf.label}</span>`;
+                    legendList.appendChild(li);
+                }
+            });
+            mapLegend.classList.remove('hidden');
+        }
+
+        btnLoadZones.addEventListener('click', () => {
+            const municipio = selectMunicipio.value;
+            if (!municipio) {
+                alert("Por favor selecciona un municipio");
+                return;
+            }
+            loadAllSavedFeatures(municipio);
+        });
+
+        // 5. Cargar Datos vía archivo GeoJSON estático local
+        btnLoadLayer.addEventListener('click', async () => {
+            const municipio = selectMunicipio.value;
+            if (!municipio) {
+                alert("Por favor selecciona un municipio");
+                return;
+            }
+
+            const geojsonUrl = getGeojsonPath(municipio);
+            if (!geojsonUrl) {
+                alert("Ruta GeoJSON no configurada para este municipio");
+                return;
+            }
+
+            btnLoadLayer.disabled = true;
+            loadingIndicator.classList.remove('hidden');
+            loadingIndicator.textContent = "Cargando mapa local...";
+
+            try {
+                const response = await fetch(geojsonUrl);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status}. Archivo GeoJSON no encontrado.`);
+                }
+
+                const geojson = await response.json();
+
+                // Remover capa anterior si existe
+                if (geojsonLayer) {
+                    map.removeLayer(geojsonLayer);
+                }
+
+                // Añadir al mapa
+                geojsonLayer = L.geoJSON(geojson, {
+                    style: defaultStyle,
+                    onEachFeature: onEachFeature
+                }).addTo(map);
+
+                // Cargar desde Supabase lo correspondiente a la promoción seleccionada
+                await loadSavedFeatures(municipio, selectPromocion.value);
+
+                // Ajustar zoom a los datos cargados
+                if (geojson.features && geojson.features.length > 0) {
+                    map.fitBounds(geojsonLayer.getBounds());
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("Error al cargar la capa catastral: " + error.message);
+            } finally {
+                btnLoadLayer.disabled = false;
+                loadingIndicator.classList.add('hidden');
+            }
+        });
+
+        // 6. Guardar en Supabase (Sincronización Bidireccional: Borrar e Insertar)
+        btnSave.addEventListener('click', async () => {
+            const municipio = selectMunicipio.value;
+            const promocion = selectPromocion.value;
+            
+            if (!municipio) {
+                alert("Debe haber un municipio seleccionado para guardar.");
+                return;
+            }
+
+            const globalFecha = inputFechaCaducidad.value || null;
+            const recordsToInsert = [];
+
+            selectedFeatures.forEach((data) => {
+                recordsToInsert.push({
+                    municipio: municipio, 
+                    barrio: data.barrio.toUpperCase(), 
+                    tipo_promocion: promocion, 
+                    activa: true,
+                    fecha_caducidad: globalFecha
+                });
+            });
+
+            btnSave.disabled = true;
+            btnSave.textContent = "Guardando...";
+            saveStatus.classList.add('hidden');
+
+            try {
+                // Validación de Combinaciones
+                if (recordsToInsert.length > 0) {
+                    // Consultar otras promos activas en el mismo municipio para los barrios seleccionados
+                    const barriosSeleccionados = recordsToInsert.map(r => r.barrio);
+                    const { data: existingPromos, error: errExisting } = await supabaseClient
+                        .from('petpro_zonas_cobertura')
+                        .select('barrio, tipo_promocion')
+                        .eq('municipio', municipio)
+                        .in('barrio', barriosSeleccionados)
+                        .neq('tipo_promocion', promocion);
+
+                    if (errExisting) throw errExisting;
+
+                    const conflictos = [];
+                    // Agrupar por barrio
+                    const promosPorBarrio = {};
+                    if (existingPromos) {
+                        existingPromos.forEach(p => {
+                            if (!promosPorBarrio[p.barrio]) promosPorBarrio[p.barrio] = [];
+                            promosPorBarrio[p.barrio].push(p.tipo_promocion);
+                        });
+                    }
+
+                    recordsToInsert.forEach(record => {
+                        const otrasPromos = promosPorBarrio[record.barrio] || [];
+                        if (otrasPromos.length > 0) {
+                            // Regla 1: NO_COBERTURA no se combina con nada.
+                            if (promocion === 'NO_COBERTURA' || otrasPromos.includes('NO_COBERTURA')) {
+                                conflictos.push(`- ${record.barrio}: Sin Cobertura no se puede combinar con nada.`);
+                            }
+                            // Regla 2: DOMICILIO_GRATIS y RECARGO_EXTENDIDO son excluyentes.
+                            else if (promocion === 'DOMICILIO_GRATIS' && otrasPromos.includes('RECARGO_EXTENDIDO')) {
+                                conflictos.push(`- ${record.barrio}: Ya tiene Recargo Extendido.`);
+                            }
+                            else if (promocion === 'RECARGO_EXTENDIDO' && otrasPromos.includes('DOMICILIO_GRATIS')) {
+                                conflictos.push(`- ${record.barrio}: Ya tiene Domicilio Gratis.`);
+                            }
+                        }
+                    });
+
+                    if (conflictos.length > 0) {
+                        alert("ERROR DE COMBINACIÓN:\n\n" + conflictos.join("\n") + "\n\nPor favor, deselecciona las zonas conflictivas antes de guardar.");
+                        saveStatus.textContent = "Guardado cancelado por conflictos.";
+                        saveStatus.className = "text-center mt-2 text-sm font-medium text-red-600";
+                        saveStatus.classList.remove('hidden');
+                        btnSave.disabled = false;
+                        btnSave.innerHTML = "Guardar Selección";
+                        return; // ABORTAR GUARDADO
+                    }
+                }
+
+                // 1. Borrar todos los registros del municipio Y PROMOCION actual
+                const { error: deleteError } = await supabaseClient
+                    .from('petpro_zonas_cobertura')
+                    .delete()
+                    .eq('municipio', municipio)
+                    .eq('tipo_promocion', promocion);
+
+                if (deleteError) throw deleteError;
+
+                // 2. Insertar los nuevos
+                if (recordsToInsert.length > 0) {
+                    const { error: insertError } = await supabaseClient
+                        .from('petpro_zonas_cobertura')
+                        .insert(recordsToInsert);
+
+                    if (insertError) throw insertError;
+                }
+
+                saveStatus.textContent = "¡Zonas guardadas con éxito!";
+                saveStatus.className = "text-center mt-2 text-sm font-medium text-green-600";
+                
+                // Refrescar mapa
+                await loadAllSavedFeatures(municipio);
+                
+                // 3. Verificación de petpro_productos SI ES DOMICILIO_GRATIS
+                if (promocion === 'DOMICILIO_GRATIS') {
+                    // Obtener la fecha máxima actual en zonas de cobertura
+                    const { data: maxZonas, error: errZonas } = await supabaseClient
+                        .from('petpro_zonas_cobertura')
+                        .select('fecha_caducidad')
+                        .eq('tipo_promocion', 'DOMICILIO_GRATIS')
+                        .order('fecha_caducidad', { ascending: false })
+                        .limit(1);
+
+                    // Obtener la fecha de caducidad actual en los productos
+                    const { data: maxProd, error: errProd } = await supabaseClient
+                        .from('petpro_productos')
+                        .select('caducidad_promo_b2c')
+                        .eq('promo_b2c', 'DOMICILIO_GRATIS')
+                        .limit(1);
+
+                    const fechaZonas = maxZonas && maxZonas.length > 0 ? maxZonas[0].fecha_caducidad : null;
+                    const fechaProd = maxProd && maxProd.length > 0 ? maxProd[0].caducidad_promo_b2c : null;
+
+                    if (fechaZonas && fechaZonas !== fechaProd) {
+                        const confirmUpdate = confirm(`Se ha detectado un cambio en la fecha de caducidad de Domicilio Gratis.\n\nNueva fecha máxima en zonas: ${fechaZonas}\nFecha actual en productos: ${fechaProd || 'Ninguna'}\n\n¿Desea actualizar la fecha de caducidad de los productos etiquetados como "DOMICILIO_GRATIS"?`);
+                        if (confirmUpdate) {
+                            const { error: updateErr } = await supabaseClient
+                                .from('petpro_productos')
+                                .update({ caducidad_promo_b2c: fechaZonas })
+                                .eq('promo_b2c', 'DOMICILIO_GRATIS');
+                                
+                            if (updateErr) {
+                                alert("Error actualizando productos: " + updateErr.message);
+                            } else {
+                                alert("Productos actualizados exitosamente.");
+                            }
+                        }
+                    }
+                }
+                
+            } catch (error) {
+                console.error(error);
+                saveStatus.textContent = "Error al guardar: " + error.message;
+                saveStatus.className = "text-center mt-2 text-sm font-medium text-red-600";
+            } finally {
+                saveStatus.classList.remove('hidden');
+                btnSave.disabled = false;
+                btnSave.innerHTML = "Guardar Selección";
+                
+                setTimeout(() => {
+                    saveStatus.classList.add('hidden');
+                }, 4000);
+            }
+        });
+    </script>
+</body>
+</html>

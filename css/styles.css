@@ -1,0 +1,344 @@
+@import url('tokens.css');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-main);
+  line-height: 1.5;
+}
+
+.btn {
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--color-white);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 100%;
+  max-width: 400px;
+  background: var(--color-white);
+  z-index: 101;
+  box-shadow: var(--shadow-lg);
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+}
+
+.drawer.open {
+  transform: translateX(0);
+}
+
+.product-card {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+/* ============================================================
+   RADAR / SONAR - Animación del badge del carrito
+   ============================================================ */
+@keyframes radar-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+.radar-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-color: #54B435;
+  animation: radar-ping 1.8s ease-out infinite;
+  pointer-events: none;
+}
+
+.radar-ring.ring-2 {
+  animation-delay: 0.6s;
+}
+
+.radar-ring.ring-3 {
+  animation-delay: 1.2s;
+}
+
+#cart-badge {
+  /* Asegurar posición relativa para los anillos absolutos */
+  position: absolute;
+  overflow: visible !important;
+}
+
+#cart-badge-num {
+  position: relative;
+  z-index: 2;
+  line-height: 1;
+}
+
+/* ============================================================
+   BOTÓN "COMPRAR BAJO PEDIDO"
+   ============================================================ */
+.btn-order-pedido {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #ffffff;
+  font-weight: 700;
+  border-radius: 1rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-order-pedido:hover {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.45);
+}
+
+.btn-order-pedido:active {
+  transform: translateY(0);
+}
+
+/* Tag pequeño "Bajo Pedido" en la tarjeta de grilla */
+.badge-under-order {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #92400e;
+  background-color: #fef3c7;
+  border: 1px solid #fcd34d;
+  padding: 1px 6px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   CHATBOT / BURBUJA WHATSAPP FLOTANTE
+   ============================================================ */
+@keyframes float-wa {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.6);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 14px rgba(37, 211, 102, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+  }
+}
+
+@keyframes modal-scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.85) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes slide-in-bottom-right {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.cx-modal-card {
+  animation: modal-scale-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.wa-float-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #25D366;
+  color: #ffffff;
+  padding: 6px 12px 6px 6px;
+  border-radius: 9999px;
+  box-shadow: 0 10px 25px -5px rgba(37, 211, 102, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slide-in-bottom-right 0.4s ease-out forwards;
+}
+
+.wa-float-btn:hover {
+  background: #20BA5A;
+  box-shadow: 0 15px 30px -5px rgba(37, 211, 102, 0.6), 0 10px 15px -5px rgba(0, 0, 0, 0.15);
+}
+
+.wa-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  background: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #25D366;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  animation: pulse-ring 2.5s infinite;
+  flex-shrink: 0;
+  position: relative;
+  cursor: pointer;
+}
+
+/* Caja de texto que se contrae hacia la izquierda */
+.wa-text-box {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  white-space: nowrap;
+  max-width: 170px;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, margin 0.35s ease;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Distintivo para contraer y expandir (signo mayor y menor) */
+.wa-toggle-pill {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.18);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  user-select: none;
+  margin-left: 2px;
+}
+
+.wa-toggle-pill:hover {
+  background: rgba(0, 0, 0, 0.4);
+  transform: scale(1.15);
+}
+
+/* Estado contraído: solo se deja visible el icono de WhatsApp con radar y el distintivo */
+.wa-float-btn.is-collapsed {
+  padding: 5px 6px 5px 5px;
+  gap: 4px;
+}
+
+.wa-float-btn.is-collapsed .wa-text-box {
+  max-width: 0;
+  opacity: 0;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
+/* Barra de progreso de auto-transición (4 segundos) */
+@keyframes countdown-bar {
+  0% {
+    width: 100%;
+  }
+  100% {
+    width: 0%;
+  }
+}
+
+.cx-progress-fill {
+  animation: countdown-bar 4s linear forwards;
+}
+
+/* Tarjetas de opciones (Chatbot vs Asesor Humano) */
+.cx-option-card {
+  transition: all 0.2s ease-in-out;
+}
+
+.cx-option-card:hover:not(.cx-option-disabled) {
+  transform: translateY(-2px);
+  border-color: #54B435;
+  box-shadow: 0 8px 20px -4px rgba(84, 180, 53, 0.2);
+}
+
+.cx-option-disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background-color: #f8fafc;
+}
+

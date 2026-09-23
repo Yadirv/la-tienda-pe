@@ -1,0 +1,12 @@
+node_modules/
+dist/
+dist-ssr/
+build/
+out/
+.next/
+.git/
+.vscode/
+.idea/
+*.log
+.env.local
+.env*.local

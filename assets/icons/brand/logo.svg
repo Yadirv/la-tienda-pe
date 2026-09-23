@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 60" width="280" height="60">
+  <defs>
+    <linearGradient id="petGreenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6BD349"/>
+      <stop offset="100%" stop-color="#46962A"/>
+    </linearGradient>
+    <linearGradient id="petDarkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#006B65"/>
+      <stop offset="100%" stop-color="#004E4A"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Icon Emblem: Rounded square with Pet Paw -->
+  <rect x="6" y="8" width="44" height="44" rx="14" fill="url(#petGreenGrad)" />
+  <!-- Paw main pad -->
+  <path d="M28 39 C22 39 18 34 20 30 C22 26 26 27 28 27 C30 27 34 26 36 30 C38 34 34 39 28 39 Z" fill="#FFFFFF"/>
+  <!-- Paw toe pads -->
+  <ellipse cx="19" cy="23" rx="3.2" ry="4.5" fill="#FFFFFF" transform="rotate(-15 19 23)"/>
+  <ellipse cx="25" cy="19" rx="3.2" ry="4.5" fill="#FFFFFF" transform="rotate(-5 25 19)"/>
+  <ellipse cx="31" cy="19" rx="3.2" ry="4.5" fill="#FFFFFF" transform="rotate(5 31 19)"/>
+  <ellipse cx="37" cy="23" rx="3.2" ry="4.5" fill="#FFFFFF" transform="rotate(15 37 23)"/>
+
+  <!-- Brand Typography -->
+  <text x="60" y="34" font-family="'Montserrat', system-ui, sans-serif" font-size="20" font-weight="800" fill="#FFFFFF" letter-spacing="-0.5">
+    La Tienda <tspan fill="#54B435">Pet</tspan>
+  </text>
+  <text x="62" y="47" font-family="'Montserrat', system-ui, sans-serif" font-size="9" font-weight="600" fill="#E2E8F0" letter-spacing="1.5">
+    TIENDA PARA MASCOTAS
+  </text>
+</svg>

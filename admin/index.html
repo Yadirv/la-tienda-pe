@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Montserrat', sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="bg-[linear-gradient(135deg,#004E4A_0%,#005955_50%,#004E4A_100%)] p-8 text-center">
+            <div class="w-16 h-16 bg-[#54B435] rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <span class="text-white text-3xl font-bold">L</span>
+            </div>
+            <h1 class="text-2xl font-bold text-white">Panel de Administración</h1>
+            <p class="text-white/80 mt-2">La Tienda Pet - MapAdmin</p>
+        </div>
+        
+        <div class="p-8">
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">Correo Electrónico</label>
+                    <input type="email" id="email" required 
+                        class="mt-1 block w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#54B435] focus:border-transparent transition-all outline-none"
+                        placeholder="admin@latiendapet.com">
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
+                    <input type="password" id="password" required 
+                        class="mt-1 block w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#54B435] focus:border-transparent transition-all outline-none"
+                        placeholder="••••••••">
+                </div>
+
+                <div id="error-message" class="hidden bg-red-50 text-red-600 p-3 rounded-lg text-sm text-center"></div>
+
+                <button type="submit" id="btn-submit"
+                    class="w-full bg-[#54B435] text-white font-bold py-3 px-4 rounded-xl hover:bg-[#439628] transition-colors shadow-lg hover:shadow-xl flex justify-center items-center">
+                    <span>Iniciar Sesión</span>
+                    <svg id="spinner" class="hidden animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de Supabase
+        const SUPABASE_URL = "https://qkzhopjfrlyvqfievcfi.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_B8kxChkEQRWA32IFAWNLXA_viGXj1Yo";
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const form = document.getElementById('login-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const errorMessage = document.getElementById('error-message');
+        const btnSubmit = document.getElementById('btn-submit');
+        const spinner = document.getElementById('spinner');
+
+        // Check if already logged in
+        async function checkSession() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                window.location.href = '/admin/dashboard.html'; // Cambiar a la página principal del admin map
+            }
+        }
+        checkSession();
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Estado de carga
+            btnSubmit.disabled = true;
+            spinner.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                errorMessage.textContent = 'Credenciales inválidas. Por favor intente de nuevo.';
+                errorMessage.classList.remove('hidden');
+                btnSubmit.disabled = false;
+                spinner.classList.add('hidden');
+            } else {
+                // Redirigir al panel
+                window.location.href = '/admin/dashboard.html';
+            }
+        });
+    </script>
+</body>
+</html>

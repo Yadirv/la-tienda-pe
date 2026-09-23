@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="favGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#54B435"/>
+      <stop offset="100%" stop-color="#004E4A"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#favGrad)" />
+  <path d="M32 46 C24 46 19 40 21 35 C23 30 29 31 32 31 C35 31 41 30 43 35 C45 40 40 46 32 46 Z" fill="#FFFFFF"/>
+  <ellipse cx="21" cy="26" rx="4" ry="5.5" fill="#FFFFFF" transform="rotate(-15 21 26)"/>
+  <ellipse cx="28" cy="21" rx="4" ry="5.5" fill="#FFFFFF" transform="rotate(-5 28 21)"/>
+  <ellipse cx="36" cy="21" rx="4" ry="5.5" fill="#FFFFFF" transform="rotate(5 36 21)"/>
+  <ellipse cx="43" cy="26" rx="4" ry="5.5" fill="#FFFFFF" transform="rotate(15 43 26)"/>
+</svg>

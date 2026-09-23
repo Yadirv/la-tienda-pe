@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Tienda Pet | Tienda para Mascotas en Colombia</title>
+    <!-- Favicon Oficial -->
+    <link rel="icon" type="image/svg+xml" href="assets/icons/brand/favicon.svg">
+    <link rel="alternate icon" type="image/png" href="assets/icons/brand/favicon.png">
+    <!-- Librerías -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons y Supabase JS -->
+    <script src="https://unpkg.com/lucide@latest"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Leaflet (mapas open source) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Estilos CSS -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="tokens.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-[#F8F9FA] font-sans">
+    <!-- HEADER (Full-Width Responsive) -->
+    <header class="sticky top-0 z-30 shadow-md bg-[linear-gradient(135deg,#004E4A_0%,#005955_50%,#004E4A_100%)]">
+        <div class="w-full max-w-[1920px] mx-auto px-4 sm:px-8 h-16 flex items-center gap-4">
+            <div class="flex items-center gap-2.5 shrink-0">
+                <!-- Botón Menú Hamburguesa Filtros en Móvil -->
+                <button id="btn-mobile-menu" class="lg:hidden p-2 rounded-xl text-white hover:bg-white/10 transition-colors mr-1">
+                    <span class="text-xl">☰</span>
+                </button>
+                <div class="w-9 h-9 rounded-xl bg-white/15 p-1 flex items-center justify-center shadow-md border border-white/20">
+                    <img src="assets/icons/brand/favicon.svg" alt="La Tienda Pet Logo" class="w-full h-full object-contain">
+                </div>
+                <span class="text-white font-bold text-xl tracking-tight hidden sm:block">
+                    La Tienda <span class="text-[#54B435]">Pet</span>
+                </span>
+            </div>
+            <div class="flex-1 relative max-w-2xl mx-auto">
+                <input id="input-search" type="search" placeholder="Buscar entre más de 1.000 productos, marcas, ref..." 
+                    class="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-[#2C3E50] bg-white/95 border border-white/20 outline-none focus:ring-2 focus:ring-[#54B435]/50 transition-all placeholder:text-[#6C7A89]">
+            </div>
+            <button id="btn-cart-toggle" class="relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-white font-semibold text-sm transition-all hover:bg-white/10 active:scale-95 shrink-0 border border-white/20">
+                <img src="assets/icons/cart/cart.svg" alt="Carrito" class="w-4 h-4 invert">
+                <span>Carrito</span>
+                <span id="cart-badge" class="absolute -top-1.5 -right-1.5 bg-[#54B435] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center hidden">
+                    <span class="radar-ring"></span>
+                    <span class="radar-ring ring-2"></span>
+                    <span class="radar-ring ring-3"></span>
+                    <span id="cart-badge-num">0</span>
+                </span>
+            </button>
+        </div>
+    </header>
+
+    <!-- HERO STRIP (Full-Width) -->
+    <div class="bg-gradient-to-r from-[#004E4A] to-[#006B65] py-3.5 px-4 sm:px-8">
+        <div class="w-full max-w-[1920px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p class="text-white text-sm font-medium">🐾 Tienda Especializada para Mascotas · Colombia</p>
+            <div class="flex items-center gap-6 text-white/80 text-xs">
+                <a href="#" onclick="openTcModal(event)" class="hover:underline text-white font-medium">Envío gratis +$150.000</a>
+                <span>Garantía de calidad</span>
+                <span>Pago seguro</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN (Full-Width Layout max-w-[1920px]) -->
+    <main class="w-full max-w-[1920px] mx-auto px-4 sm:px-8 py-6">
+
+        <!-- LANDING VIEW (Nivel 1) -->
+        <div id="landing-view">
+            <div class="bg-[#F8F9FA] rounded-3xl p-8 sm:p-12 mb-10 text-center border border-[#E2E8F0] shadow-sm">
+                <h2 class="text-3xl sm:text-4xl font-black text-[#004E4A] mb-4">Lo Mejor para tu Mascota</h2>
+                <p class="text-slate-600 mb-8 max-w-2xl mx-auto">Descubre nuestra selección de productos destacados con la más alta calidad y nutrición. Porque ellos merecen lo mejor.</p>
+                <button onclick="window.showCatalogView()" class="bg-[#54B435] hover:bg-[#46962A] hover:scale-105 transition-all text-white font-bold py-3.5 px-8 rounded-full shadow-lg text-lg">
+                    Explorar todo el Catálogo
+                </button>
+            </div>
+
+            <!-- BANNER DOMICILIO GRATIS (Clonado) -->
+            <div class="mb-10 rounded-2xl overflow-hidden bg-gradient-to-r from-[#4c1d95] via-[#581c87] to-[#3b0764] shadow-lg animate-in fade-in slide-in-from-top-4 duration-500 group hover:scale-[1.01] hover:shadow-2xl transition-all relative">
+                <!-- Decoración de fondo (Lámparas / Destellos) -->
+                <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-yellow-300 via-transparent to-transparent"></div>
+                <div class="absolute -right-10 -top-10 w-32 h-32 bg-yellow-500 blur-3xl opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+
+                <div class="px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
+                    <div class="flex items-center gap-5 text-white cursor-pointer" onclick="openTcModal(event)">
+                        <div class="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center shrink-0 border border-white/20 group-hover:rotate-12 transition-transform duration-500 shadow-[0_0_15px_rgba(253,224,71,0.3)]">
+                            <span class="text-3xl drop-shadow-md">🎁</span>
+                        </div>
+                        <div>
+                            <p class="text-yellow-300 text-xs font-semibold tracking-wider uppercase mb-1 drop-shadow-sm">¡Celebra con tu mascota!</p>
+                            <h4 class="text-xl sm:text-2xl font-black tracking-tight text-white drop-shadow-md">Obtén tu Domicilio <span class="text-yellow-400">GRATIS</span></h4>
+                            <p class="text-white/80 text-sm mt-1">Suscríbete ahora · <span class="underline hover:text-white transition-colors">Aplican T&C</span></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 flex-wrap sm:flex-nowrap shrink-0 relative z-20">
+                        <button onclick="openCheckCoverageModal()" class="bg-yellow-400 hover:bg-yellow-300 text-purple-950 font-black px-6 py-3 rounded-full text-xs sm:text-sm shadow-md transition-all hover:scale-105 flex items-center gap-2">
+                            <span>📍</span>
+                            <span>Comprobar Domicilio Gratis</span>
+                        </button>
+                        <button onclick="setCategory('promo_gratis'); window.showCatalogView();" class="bg-white/20 hover:bg-white/30 text-white border border-white/30 transition-all font-bold px-6 py-3 rounded-full text-xs sm:text-sm shadow-md">
+                            Reclamar Ahora
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-10">
+                <h3 class="text-2xl font-black text-[#2C3E50] mb-6 flex items-center gap-2">
+                    <span class="text-amber-500">⭐</span> Productos Destacados
+                </h3>
+                <div id="featured-grid" class="grid gap-6" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr))">
+                    <!-- Featured Product Cards injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- CATALOG VIEW (Nivel 2) -->
+        <div id="catalog-view" class="hidden">
+        <!-- BARRA SUPERIOR DE HERRAMIENTAS -->
+        <section class="filters-bar bg-white rounded-2xl border border-[#E2E8F0] shadow-xs p-3 sm:px-5 sm:py-3.5 mb-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+            <!-- GRUPO FILTROS: En móvil ocupa la fila 1 completa de manera simétrica; en pantallas medianas/grandes se muestran también Todos, Domicilio Gratis y Categorías -->
+            <div class="w-full sm:w-auto flex items-center gap-2">
+                <!-- Botón Hamburguesa Categorías (Oculto en móvil pequeño, visible en tablets) -->
+                <button id="btn-mobile-categories" class="hidden sm:inline-flex lg:hidden items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[#004E4A] text-white shadow-xs shrink-0">
+                    <span>📁 Categorías</span>
+                </button>
+
+                <!-- Filtros por Especie -->
+                <button onclick="setCategory('all')" data-cat="all" class="filter-btn hidden sm:inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl sm:rounded-full text-xs sm:text-sm font-bold bg-[#004E4A] text-white border-2 border-[#004E4A] transition-all shrink-0">Todos</button>
+                <button onclick="setCategory('dogs')" data-cat="dogs" class="filter-btn flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl sm:rounded-full text-xs sm:text-sm font-bold bg-[#F8F9FA] text-[#2C3E50] border-2 border-[#E2E8F0] hover:border-[#004E4A] transition-all cursor-pointer">🐕 Perros</button>
+                <button onclick="setCategory('cats')" data-cat="cats" class="filter-btn flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl sm:rounded-full text-xs sm:text-sm font-bold bg-[#F8F9FA] text-[#2C3E50] border-2 border-[#E2E8F0] hover:border-[#004E4A] transition-all cursor-pointer">🐈 Gatos</button>
+                <button onclick="setCategory('promo_gratis')" data-cat="promo_gratis" class="filter-btn hidden sm:inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl sm:rounded-full text-xs sm:text-sm font-bold bg-emerald-50 text-emerald-700 border-2 border-emerald-200 hover:border-emerald-400 transition-all shrink-0">🎁 Domicilio Gratis</button>
+            </div>
+
+            <!-- GRUPO CONTROLES: En móvil ocupa la fila 2 completa distribuyendo Toggle IVA y Clasificador de Precio -->
+            <div class="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 sm:ml-auto">
+                <!-- Toggle Segmentado IVA (Elegante control de píldora) -->
+                <div class="inline-flex p-1 bg-[#F1F5F9] rounded-xl border border-[#E2E8F0] shadow-2xs shrink-0 select-none items-center" id="iva-segmented-container">
+                    <input type="checkbox" id="toggle-iva" class="sr-only">
+                    <button type="button" id="btn-iva-sin" onclick="window.setIvaMode(false)" class="px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-black rounded-lg transition-all bg-white text-[#004E4A] shadow-xs cursor-pointer">
+                        Sin IVA
+                    </button>
+                    <button type="button" id="btn-iva-con" onclick="window.setIvaMode(true)" class="px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg transition-all text-slate-500 hover:text-slate-800 cursor-pointer">
+                        Con IVA
+                    </button>
+                </div>
+
+                <!-- Clasificador de Precio con flecha dropdown estilizada -->
+                <div class="relative flex-1 sm:flex-none min-w-[145px] sm:min-w-[175px]">
+                    <select id="select-sort" class="w-full appearance-none pl-3 pr-7 py-2 rounded-xl border border-[#E2E8F0] text-xs sm:text-sm text-[#2C3E50] bg-white outline-none focus:border-[#004E4A] transition-all cursor-pointer font-semibold shadow-2xs">
+                        <option value="price-asc">Precio: menor a mayor</option>
+                        <option value="price-desc">Precio: mayor a menor</option>
+                    </select>
+                    <div class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 flex items-center">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LAYOUT DE 2 COLUMNAS (SIDEBAR IZQUIERDO ARBOL + GRILLA COMPLETA HASTA EXTREMO DERECHO) -->
+        <div class="flex flex-col lg:flex-row gap-6 items-start">
+            <!-- SIDEBAR IZQUIERDO (DESKTOP): EXTREMO IZQUIERDO FIJO -->
+            <aside class="hidden lg:block w-72 shrink-0 bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sticky top-20">
+                <div class="flex items-center justify-between pb-3 mb-3 border-b border-[#E2E8F0]">
+                    <h3 class="font-bold text-[#004E4A] text-sm flex items-center gap-1.5">
+                        <span>📁 Categorías & Marcas</span>
+                    </h3>
+                    <button data-action="reset-tree" class="text-[11px] font-bold text-[#54B435] hover:underline cursor-pointer">Ver Todos</button>
+                </div>
+
+                <!-- ÁRBOL JERÁRQUICO DESKTOP -->
+                <nav id="category-tree" class="space-y-1 max-h-[72vh] overflow-y-auto pr-1">
+                    <!-- Dinámico -->
+                </nav>
+            </aside>
+
+            <!-- CONTENEDOR DE PRODUCTOS (EXPANDIDO HASTA EXTREMO DERECHO) -->
+            <section class="flex-1 w-full min-w-0">
+                <!-- Breadcrumbs de Filtro Activo -->
+                <div id="active-filter-breadcrumbs" class="mb-4 flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-[#E2E8F0] shadow-xs text-xs text-[#6C7A89]">
+                    <span id="breadcrumb-text" class="font-semibold text-[#004E4A]">Mostrando todos los productos</span>
+                    <span id="breadcrumb-count" class="bg-emerald-50 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full">0 productos</span>
+                </div>
+
+                <!-- BANNER DOMICILIO GRATIS -->
+                <div class="mb-6 rounded-2xl overflow-hidden bg-gradient-to-r from-[#4c1d95] via-[#581c87] to-[#3b0764] shadow-lg animate-in fade-in slide-in-from-top-4 duration-500 relative">
+                    <!-- Decoración de fondo (Lámparas / Destellos) -->
+                    <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-yellow-300 via-transparent to-transparent"></div>
+                    <div class="absolute -right-10 -top-10 w-32 h-32 bg-yellow-500 blur-3xl opacity-20 transition-opacity duration-500"></div>
+
+                    <div class="px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
+                        <div class="flex items-center gap-5 text-white">
+                            <div class="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center shrink-0 border border-white/20 transition-transform duration-500 shadow-[0_0_15px_rgba(253,224,71,0.3)]">
+                                <span class="text-3xl drop-shadow-md">🎁</span>
+                            </div>
+                            <div>
+                                <p class="text-yellow-300 text-xs font-semibold tracking-wider uppercase mb-1 drop-shadow-sm">¡Celebra con tu mascota!</p>
+                                <h4 class="text-xl sm:text-2xl font-black tracking-tight text-white drop-shadow-md">Obtén tu Domicilio <span class="text-yellow-400">GRATIS</span></h4>
+                                <p class="text-white/80 text-sm mt-1">Suscríbete ahora · <span class="underline hover:text-white transition-colors cursor-pointer" onclick="openTcModal(event)">Aplican T&C</span></p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 flex-wrap sm:flex-nowrap shrink-0 relative z-20">
+                            <button onclick="openCheckCoverageModal()" class="bg-yellow-400 hover:bg-yellow-300 text-purple-950 font-black px-6 py-3 rounded-full text-xs sm:text-sm shadow-md transition-all hover:scale-105 flex items-center gap-2 cursor-pointer">
+                                <span>📍</span>
+                                <span>Comprobar Domicilio Gratis</span>
+                            </button>
+                            <button onclick="setCategory('promo_gratis')" class="bg-white/20 hover:bg-white/30 text-white border border-white/30 transition-all font-bold px-6 py-3 rounded-full text-xs sm:text-sm shadow-md cursor-pointer">
+                                Reclamar Ahora
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="product-grid" class="grid gap-6" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr))">
+                    <!-- Product Cards injected here -->
+                </div>
+
+                <!-- CONTROLES DE PAGINACIÓN -->
+                <div id="pagination-controls" class="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-[#E2E8F0] shadow-sm">
+                    <button id="btn-prev-page" class="px-5 py-2.5 rounded-lg font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        &larr; Anterior
+                    </button>
+                    <span id="pagination-info" class="text-sm font-semibold text-[#004E4A]">
+                        Página 1 de 1
+                    </span>
+                    <button id="btn-next-page" class="px-5 py-2.5 rounded-lg font-bold text-white bg-[#004E4A] hover:bg-[#003B38] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        Siguiente &rarr;
+                    </button>
+                </div>
+                <div id="empty-catalog" class="hidden flex-col items-center justify-center py-12">
+                    <p class="text-[#6C7A89]">No se encontraron productos en esta selección.</p>
+                </div>
+            </section>
+        </div>
+        </div> <!-- Fin de catalog-view -->
+    </main>
+
+    <!-- DRAWER / MENU HAMBURGUESA DE CATEGORÍAS (MÓVIL) -->
+    <div id="mobile-category-drawer" class="fixed inset-0 z-50 hidden lg:hidden">
+        <div id="mobile-drawer-backdrop" class="absolute inset-0 bg-black/50 opacity-0 transition-opacity"></div>
+        <div class="absolute left-0 top-0 h-full w-4/5 max-w-xs bg-white shadow-2xl p-5 flex flex-col transition-transform duration-300 -translate-x-full">
+            <div class="flex items-center justify-between pb-3 border-b border-[#E2E8F0] mb-3">
+                <h3 class="font-bold text-[#004E4A] text-base">📁 Categorías & Marcas</h3>
+                <button id="close-mobile-drawer" class="p-1.5 hover:bg-gray-100 rounded-full font-bold text-slate-500">✕</button>
+            </div>
+            <div class="flex-1 overflow-y-auto pr-1">
+                <nav id="mobile-category-tree" class="space-y-1">
+                    <!-- Árbol dinámico móvil -->
+                </nav>
+            </div>
+            <div class="pt-3 border-t border-[#E2E8F0] mt-auto">
+                <button id="btn-apply-mobile-drawer" class="w-full bg-[#004E4A] text-white py-2.5 rounded-xl font-bold text-sm">Ver Productos</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRODUCT DETAIL MODAL (Emergente Ficha Técnica) -->
+    <div id="modal-product-detail" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4" style="background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden relative animate-in fade-in zoom-in duration-200">
+            <button id="close-product-detail" class="absolute right-5 top-5 text-slate-400 hover:text-slate-700 transition-colors z-20 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold">✕</button>
+            
+            <div id="product-detail-content" class="p-6 sm:p-8 flex flex-col md:flex-row gap-6 max-h-[80vh] overflow-y-auto">
+                <!-- Dinámico -->
+            </div>
+            
+            <div class="bg-slate-50 p-4 sm:p-6 flex items-center justify-between border-t border-slate-100 gap-4">
+                <button id="modal-add-to-cart-btn" class="flex-1 bg-[#54B435] hover:bg-[#46962A] text-white font-bold py-3.5 px-6 rounded-2xl transition-all shadow-md flex items-center justify-center gap-2">
+                    <span>Agregar al Carrito</span>
+                </button>
+                <button id="modal-order-btn"
+                    class="btn-order-pedido flex-1 py-3.5 px-6 hidden"
+                    title="Este producto se tramita directamente con el importador. Tiempo estimado de entrega: 4 a 5 días hábiles.">
+                    <span>🚚</span>
+                    <span>Comprar Bajo Pedido</span>
+                </button>
+                <button id="modal-close-btn" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3.5 px-6 rounded-2xl transition-colors">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CART DRAWER -->
+    <div id="cart-drawer" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/50 opacity-0 transition-opacity" id="cart-backdrop"></div>
+        <div class="absolute right-0 top-0 h-full w-full max-w-sm bg-white shadow-2xl p-6 flex flex-col transition-transform duration-300 translate-x-full">
+            <div class="flex items-center justify-between pb-4 border-b border-[#E2E8F0]">
+                <h2 class="text-xl font-bold text-[#004E4A]">Tu Carrito (<span id="cart-count">0</span>)</h2>
+                <button id="close-cart" class="p-2 hover:bg-gray-100 rounded-full">✕</button>
+            </div>
+            
+            <div class="bg-blue-50 border border-blue-200 text-blue-800 text-xs p-3 mt-3 rounded-lg flex gap-2 items-start">
+                <span class="text-lg leading-none">🚚</span>
+                <p>El costo del envío se calcula de acuerdo a la <strong>ciudad seleccionada</strong> y promociones vigentes.</p>
+            </div>
+
+            <!-- Botón Comprobar Domicilio Gratis en Carrito -->
+            <button onclick="openCheckCoverageModal()" class="mt-3 w-full bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-900 text-xs font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-xs">
+                <span>🎁</span>
+                <span>Comprobar Domicilio Gratis</span>
+            </button>
+
+            <div id="cart-items-list" class="flex-1 overflow-y-auto py-4 space-y-4"></div>
+            <div id="cart-footer" class="border-t border-[#E2E8F0] pt-4 mt-auto">
+                <button id="btn-checkout" class="w-full bg-[#54B435] text-white py-3 rounded-xl font-bold">Finalizar Pedido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHECKOUT MODAL -->
+    <div id="modal-checkout" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-box bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl relative overflow-y-auto max-h-[96vh]">
+            <button data-action="close-modal" class="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full">✕</button>
+            <h2 class="text-2xl font-bold mb-1 text-[#004E4A]">Finalizar Pedido</h2>
+            <p class="text-xs text-slate-400 mb-4">Cobertura: Área Metropolitana de Medellín</p>
+
+            <!-- CONTENEDOR DINÁMICO DE PROMOCIONES (Inyectado por JS) -->
+            <div id="checkout-shipping-banner" class="mb-5 transition-all empty:hidden"></div>
+
+            <form id="form-checkout" class="space-y-3">
+                <!-- Datos personales -->
+                <input type="text" id="input-nombre" name="nombre_b2c"
+                    placeholder="Nombre completo" class="w-full p-3 border rounded-xl text-sm" required>
+                <input type="text" id="input-cc" name="cc_nit"
+                    placeholder="Documento de Identidad" class="w-full p-3 border rounded-xl text-sm" required>
+                <input type="email" id="input-email" name="email_b2c"
+                    placeholder="Correo Electrónico" class="w-full p-3 border rounded-xl text-sm" required>
+                <input type="tel" id="input-telefono" name="telefono"
+                    placeholder="Teléfono / Celular" class="w-full p-3 border rounded-xl text-sm" required>
+
+                <!-- Municipio (select dinámico poblado desde Supabase v_municipios) -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1 ml-1">Municipio *</label>
+                    <select id="select-municipio" name="ciudad"
+                        class="w-full p-3 border rounded-xl text-sm bg-white" required>
+                        <option value="">Cargando municipios…</option>
+                    </select>
+                </div>
+
+                <!-- Dirección con autocompletado fuzzy -->
+                <div class="relative">
+                    <label class="block text-xs font-semibold text-slate-500 mb-1 ml-1">Dirección de envío *</label>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="input-direccion" name="direccion_b2c"
+                            placeholder="Ej: Calle 10 # 43-12" autocomplete="new-password"
+                            class="flex-1 p-3 border rounded-xl text-sm" required>
+                        <!-- Badge de validación: hidden por defecto -->
+                        <span id="address-status-badge" class="hidden shrink-0 text-xs font-bold px-2 py-1 rounded-full"></span>
+                    </div>
+                    <!-- Panel de sugerencias fuzzy -->
+                    <ul id="address-suggestions"
+                        class="hidden absolute z-10 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 max-h-44 overflow-y-auto text-sm">
+                    </ul>
+                    <p id="address-hint" class="text-[10px] text-slate-400 mt-1 ml-1">
+                        Escribe tu dirección. La verificaremos automáticamente en 2 segundos.
+                    </p>
+                </div>
+
+                <!-- Fallback: Selección manual y visual de barrio (Oculto por defecto) -->
+                <div id="fallback-barrio-wrap" class="hidden relative mt-2 p-3.5 bg-amber-50/90 border border-amber-200 rounded-xl space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-bold text-amber-900">
+                            🗺️ Selecciona tu Barrio o Vereda *
+                        </label>
+                        <span id="selected-barrio-badge" class="hidden text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
+                            Barrio seleccionado
+                        </span>
+                    </div>
+                    
+                    <div class="relative">
+                        <input type="text" id="input-barrio-fallback" name="barrio_fallback" list="barrios-list"
+                            placeholder="Escribe tu barrio o haz clic en el mapa..." autocomplete="off"
+                            class="w-full p-3 border rounded-xl text-sm border-amber-300 focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 bg-white shadow-2xs">
+                        <datalist id="barrios-list">
+                            <!-- Llenado dinámicamente vía JS -->
+                        </datalist>
+                    </div>
+
+                    <p id="fallback-instruction-hint" class="text-[11px] text-amber-800 leading-snug">
+                        ⚠️ No pudimos ubicar la dirección exacta automáticamente. <strong>Haz clic sobre tu barrio en el mapa</strong> o búscalo en la lista para validar tu envío.
+                    </p>
+                </div>
+
+                <!-- Detalles adicionales de la dirección -->
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <input type="text" id="input-urbanizacion" name="urbanizacion"
+                            placeholder="Edificio / Conjunto" class="w-full p-3 border rounded-xl text-sm" required>
+                    </div>
+                    <div>
+                        <input type="text" id="input-torre" name="torre"
+                            placeholder="Torre / Bloque" class="w-full p-3 border rounded-xl text-sm" required>
+                    </div>
+                    <div>
+                        <input type="text" id="input-apto" name="apto"
+                            placeholder="Apto / Casa" class="w-full p-3 border rounded-xl text-sm" required>
+                    </div>
+                </div>
+
+                <!-- Campo oculto: JSON de la dirección validada -->
+                <input type="hidden" id="validated-address-json" name="validated_address">
+
+                <!-- Mini-mapa Leaflet con Polígonos de Barrios -->
+                <div id="checkout-map-wrap" class="hidden mt-2">
+                    <div class="flex items-center justify-between mb-1.5 px-1">
+                        <span id="map-header-title" class="text-xs font-bold text-slate-700">📍 Mapa de Barrios del Municipio</span>
+                        <span id="map-hover-barrio" class="text-xs font-semibold text-emerald-700 truncate max-w-[220px]"></span>
+                    </div>
+                    <div id="checkout-map" style="height:260px; border-radius:12px; overflow:hidden;" class="border border-slate-200 shadow-sm"></div>
+                    <p id="map-footer-hint" class="text-[10px] text-slate-500 mt-1 ml-1">
+                        💡 Pasa el cursor por el mapa para ver el nombre de cada barrio y haz clic sobre el tuyo.
+                    </p>
+                </div>
+
+                <!-- Opciones de Pago -->
+                <div class="mt-4 pt-4 border-t border-slate-100">
+                    <label class="block text-sm font-bold text-[#004E4A] mb-3">Método de Pago *</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                            <input type="radio" name="metodo_pago" value="Contraentrega" class="w-4 h-4 text-[#004E4A] focus:ring-[#004E4A]" required>
+                            <div class="flex flex-col">
+                                <span class="text-sm font-semibold text-slate-700">Pago Contraentrega</span>
+                                <span class="text-xs text-slate-500">Pagas al recibir tu pedido</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                            <input type="radio" name="metodo_pago" value="Transferencia" class="w-4 h-4 text-[#004E4A] focus:ring-[#004E4A]" required>
+                            <div class="flex flex-col">
+                                <span class="text-sm font-semibold text-slate-700">Transferencia "Llave Bre-B, Nequi"</span>
+                                <span class="text-xs text-slate-500">Se te enviarán las instrucciones por WhatsApp</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-submit-checkout"
+                    class="w-full bg-[#004E4A] text-white py-3 mt-2 rounded-xl font-bold flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Finalizar Compra
+                </button>
+            </form>
+
+            <!-- Pantalla de Confirmación (Oculta por defecto) -->
+            <div id="confirmation-screen" class="hidden space-y-4">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-[#2C3E50]">
+                    <h3 class="font-bold text-[#004E4A] mb-2 border-b border-slate-200 pb-2">Resumen de tus datos</h3>
+                    <ul class="space-y-1" id="confirmation-details-list">
+                        <!-- Llenado dinámicamente vía JS -->
+                    </ul>
+                </div>
+                <div class="flex gap-3 mt-4">
+                    <button type="button" id="btn-back-checkout" class="flex-1 bg-slate-200 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-300 transition-colors">Volver y Editar</button>
+                    <button type="button" id="btn-confirm-final" class="flex-1 bg-[#54B435] text-white py-3 rounded-xl font-bold hover:bg-[#46962A] transition-colors flex items-center justify-center gap-2">Enviar Pedido</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="mt-12 border-t border-[#E2E8F0] bg-[#004E4A]">
+        <div class="max-w-7xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <span class="text-white font-bold flex items-center gap-2">
+                <img src="assets/icons/brand/favicon.svg" alt="Logo" class="w-5 h-5">
+                La Tienda Pet
+            </span>
+            <div class="flex items-center gap-4">
+                <a href="#" onclick="openTcModal(event)" class="text-white/80 hover:text-white text-sm transition-colors">Términos y Condiciones</a>
+                <p class="text-white/50 text-xs border-l border-white/20 pl-4">Todos los derechos reservados © 2026</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL TERMINOS Y CONDICIONES (PRÓXIMAMENTE) -->
+    <div id="modal-tc" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4" style="background: rgba(0,0,0,0.5);">
+        <div class="bg-white rounded-2xl p-8 max-w-lg w-full shadow-2xl relative text-left max-h-[90vh] overflow-y-auto">
+            <button onclick="closeTcModal()" class="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full text-slate-400 font-bold">✕</button>
+            <h2 class="text-2xl font-black text-[#004E4A] mb-4 border-b pb-4">Términos y Condiciones de Envío</h2>
+            
+            <div class="space-y-4 text-sm text-slate-600 mb-6">
+                <div>
+                    <h3 class="font-bold text-emerald-700 text-lg flex items-center gap-2">🟢 Domicilios Gratis</h3>
+                    <p class="mt-1">Nuestra promoción de <strong>Domicilio Gratis</strong> aplica bajo las siguientes condiciones:</p>
+                    <ul class="list-disc pl-5 mt-1 space-y-2">
+                        <li><strong>Por compras iguales o superiores a $150.000 COP:</strong> Aplica para la zona Sur del Valle de Aburrá, Medellín y en la Zona Norte <strong>solo aplica para Bello</strong>.<br>
+                        <span class="text-rose-600 font-semibold text-xs">Nota: Esta promoción NO aplica para Zonas de difícil acceso en las laderas de las ciudades, tampoco aplica para los municipios del Norte como Copacabana, Girardota o Barbosa.</span></li>
+                        <li><strong>Por compras iguales o superiores a $80.000 COP en productos seleccionados:</strong> Aplica exclusivamente para la zona Sur del Valle de Aburrá (Envigado, Sabaneta, Itagüí, La Estrella).<br>
+                        <span class="text-rose-600 font-semibold text-xs">Nota: No cubre todos los barrios de estos municipios, las zonas de difícil acceso no están cubiertas para domicilio gratis.</span></li>
+                    </ul>
+                </div>
+
+                <div class="pt-2">
+                    <h3 class="font-bold text-amber-600 text-lg flex items-center gap-2">🟠 Cargo Extendido</h3>
+                    <p class="mt-1">Se aplicará un <strong>Cargo Extendido</strong> en los siguientes casos:</p>
+                    <ul class="list-disc pl-5 mt-1 space-y-1">
+                        <li>Si las compras son inferiores a $150.000 COP.</li>
+                        <li>Si la entrega es en zonas sin cobertura de domicilio gratis dentro de la ciudad seleccionada (como zonas de difícil acceso, laderas, o municipios no participantes).</li>
+                    </ul>
+                    <p class="mt-1">Este recargo se calculará automáticamente durante el proceso de <em>Finalizar Pedido</em> al validar tu dirección exacta en nuestro mapa.</p>
+                </div>
+            </div>
+
+            <button onclick="closeTcModal()" class="w-full bg-[#004E4A] hover:bg-[#003d3a] text-white font-bold py-3 rounded-xl transition-colors">Aceptar y Cerrar</button>
+        </div>
+    </div>
+
+    <!-- MODAL RECLAMAR AHORA -->
+    <div id="modal-reclamar" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4" style="background: rgba(0,0,0,0.5);">
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl relative text-center">
+            <button onclick="closeReclamarModal()" class="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full text-slate-400 font-bold">✕</button>
+            <div class="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">🛒</div>
+            <h3 class="text-xl font-bold text-[#004E4A] mb-2">¡Reclama tu beneficio!</h3>
+            <p class="text-sm text-slate-600 mb-6">Para obtener el Domicilio Gratis, debes agregar a tu carrito los productos seleccionados con la etiqueta o marca <strong>"Domicilio Gratis"</strong>. ¡Explora el catálogo y llena tu carrito!</p>
+            <button onclick="closeReclamarModal(); window.showCatalogView();" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl transition-colors">Ir al Catálogo</button>
+        </div>
+    </div>
+
+    <!-- MODAL COMPROBAR DOMICILIO GRATIS -->
+    <div id="modal-check-coverage" class="fixed inset-0 z-[65] hidden flex items-center justify-center p-4" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative text-left border border-slate-100 animate-in fade-in zoom-in duration-200">
+            <button onclick="closeCheckCoverageModal()" class="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors text-sm font-bold" title="Cerrar">✕</button>
+
+            <div class="flex items-center gap-3.5 mb-4 border-b border-slate-100 pb-3.5">
+                <div class="w-12 h-12 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center text-2xl shrink-0 shadow-xs">
+                    🎁
+                </div>
+                <div>
+                    <h3 class="text-lg font-black text-[#004E4A] leading-tight">Comprobar Domicilio Gratis</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Ingresa tu ciudad y dirección y comprueba zona de cobertura</p>
+                </div>
+            </div>
+
+            <form id="form-check-coverage" onsubmit="handleCheckCoverageSubmit(event)" class="space-y-3.5 mb-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1 ml-1">Ciudad / Municipio *</label>
+                    <select id="coverage-select-municipio" class="w-full p-3 border border-slate-200 rounded-xl text-sm bg-white outline-none focus:border-[#54B435] focus:ring-2 focus:ring-[#54B435]/20 font-medium" required>
+                        <option value="">Selecciona tu municipio…</option>
+                        <option value="MEDELLIN">Medellín</option>
+                        <option value="BELLO">Bello</option>
+                        <option value="ENVIGADO">Envigado</option>
+                        <option value="ITAGUI">Itagüí</option>
+                        <option value="SABANETA">Sabaneta</option>
+                        <option value="LA ESTRELLA">La Estrella</option>
+                        <option value="CALDAS">Caldas</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1 ml-1">Dirección de entrega *</label>
+                    <input type="text" id="coverage-input-direccion" placeholder="Ej: Calle 10 # 43-12" class="w-full p-3 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#54B435] focus:ring-2 focus:ring-[#54B435]/20 font-medium" required>
+                    <p class="text-[11px] text-slate-400 mt-1 ml-1">Validamos tu dirección con la cartografía catastral y promociones vigentes.</p>
+                </div>
+
+                <button type="submit" id="btn-coverage-check" class="w-full bg-[#54B435] hover:bg-[#46962A] text-white font-bold py-3 px-4 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-sm">
+                    <span>🔍</span>
+                    <span>Comprobar Cobertura</span>
+                </button>
+            </form>
+
+            <!-- Contenedor del Resultado -->
+            <div id="coverage-result-container" class="transition-all"></div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ASISTENCIA WHATSAPP & CHATBOT (573053862555) -->
+    <!-- ============================================================ -->
+    <!-- 1. Modal de Bienvenida (Sin botón de cerrar: auto-transición a burbuja en 4s) -->
+    <div id="modal-cx-welcome" class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs transition-opacity duration-300">
+        <div class="cx-modal-card bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative text-center border border-slate-100">
+            <div class="relative w-20 h-20 mx-auto mb-4">
+                <div class="w-20 h-20 rounded-2xl bg-[#004E4A] flex items-center justify-center shadow-lg p-2.5">
+                    <img src="assets/icons/brand/favicon.svg" alt="Asistente La Tienda Pet" class="w-full h-full object-contain">
+                </div>
+                <span class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#25D366] border-2 border-white flex items-center justify-center shadow">
+                    <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
+                </span>
+            </div>
+
+            <span class="inline-block px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full uppercase tracking-wider mb-2">Asistente Virtual 🐾</span>
+            <h3 class="text-xl sm:text-2xl font-black text-[#004E4A] mb-2 leading-tight">¡Hola! Te damos la bienvenida a La Tienda Pet</h3>
+            <p class="text-sm text-slate-600 mb-5 leading-relaxed">
+                Estaremos disponibles para ayudarte en todo momento con tus productos, dudas y pedidos.
+            </p>
+
+            <div class="bg-slate-50 rounded-2xl p-3 mb-4 border border-slate-200/70 text-left flex items-center gap-3">
+                <span class="text-2xl shrink-0">📍</span>
+                <p class="text-xs text-slate-600">
+                    En unos segundos este asistente se ubicará en la <strong>esquina inferior derecha</strong> para no interrumpir tu navegación.
+                </p>
+            </div>
+
+            <!-- Barra de Progreso de Auto-Transición (4 segundos) -->
+            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-[#54B435] h-full cx-progress-fill"></div>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-2 flex items-center justify-center gap-1 font-medium">
+                <span>Continuando a la tienda automáticamente...</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- 2. Burbuja Flotante de WhatsApp (Contraíble a la izquierda, animación radar intacta) -->
+    <div id="wa-floating-container" class="hidden">
+        <div id="wa-float-btn" class="wa-float-btn group" title="Asistencia por WhatsApp">
+            <!-- Icono de WhatsApp con animación estilo radar (siempre visible a la izquierda) -->
+            <div class="wa-icon-wrapper" onclick="openOptionsModal()" title="Abrir Asistente">
+                <img src="assets/icons/whatsapp/whatsapp.svg" alt="WhatsApp" class="w-5 h-5" style="filter: invert(53%) sepia(87%) saturate(417%) hue-rotate(93deg) brightness(97%) contrast(92%);">
+            </div>
+
+            <!-- Texto descriptivo (se contrae hacia la izquierda) -->
+            <div id="wa-text-box" class="wa-text-box" onclick="openOptionsModal()" title="Abrir Asistente">
+                <span class="text-[11px] font-bold text-white/90 leading-none">¿Ayuda o preguntas?</span>
+                <span class="text-xs font-black tracking-wide text-white flex items-center gap-1">
+                    WhatsApp <span class="w-1.5 h-1.5 rounded-full bg-white inline-block"></span>
+                </span>
+            </div>
+
+            <!-- Distintivo para contraer y expandir (signo mayor / menor) -->
+            <button id="wa-toggle-btn" onclick="toggleWaBubble(event)" class="wa-toggle-pill" title="Contraer / Expandir burbuja">
+                <span id="wa-toggle-icon">&gt;</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 3. Modal de Opciones: Chat Bot (IA) vs Asesor Humano -->
+    <div id="modal-cx-options" class="fixed inset-0 z-[80] hidden flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs transition-opacity duration-300">
+        <div class="cx-modal-card bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl relative text-left border border-slate-100">
+            <button onclick="closeOptionsModal()" class="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors text-sm font-bold" title="Cerrar ventana">✕</button>
+
+            <div class="flex items-center gap-3 mb-4 border-b border-slate-100 pb-3.5">
+                <div class="w-12 h-12 rounded-2xl bg-[#004E4A] flex items-center justify-center p-2 shadow-sm shrink-0">
+                    <img src="assets/icons/brand/favicon.svg" alt="La Tienda Pet" class="w-full h-full object-contain">
+                </div>
+                <div>
+                    <h3 class="text-lg font-black text-[#004E4A] leading-tight">Centro de Asistencia</h3>
+                    <p class="text-xs text-slate-500">¿Cómo deseas comunicarte con nosotros?</p>
+                </div>
+            </div>
+
+            <div class="space-y-3 mb-4">
+                <!-- OPCIÓN 1: CHAT BOT (INACTIVO HASTA CONECTAR EL SERVICIO) -->
+                <div class="cx-option-card cx-option-disabled p-4 rounded-2xl border border-slate-200 relative select-none">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">🤖</span>
+                            <span class="font-bold text-slate-600 text-sm">Preguntar a Chat bot</span>
+                        </div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full border border-amber-200">
+                            Próximamente
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-2 leading-relaxed">
+                        Respuestas automatizadas 24/7 sobre catálogo, productos y pedidos con Inteligencia Artificial.
+                    </p>
+                    <div class="flex items-center gap-1.5 text-[11px] text-amber-800 font-medium bg-amber-50 px-2.5 py-1.5 rounded-xl border border-amber-200/60">
+                        <span>ℹ️</span>
+                        <span>Modo Chat Bot inactivo temporalmente mientras se conecta el servicio de IA.</span>
+                    </div>
+                </div>
+
+                <!-- OPCIÓN 2: ASESOR HUMANO (ACTIVO / WHATSAPP 573053862555) -->
+                <a href="https://wa.me/573053862555?text=Hola%20%F0%9F%91%8B%20Deseo%20contactar%20con%20un%20asesor%20humano%20en%20La%20Tienda%20Pet%20para%20recibir%20ayuda%20con%20mi%20compra." 
+                   target="_blank" rel="noopener noreferrer"
+                   onclick="closeOptionsModal()"
+                   class="cx-option-card block p-4 rounded-2xl border-2 border-emerald-500/50 hover:border-[#25D366] bg-emerald-50/40 hover:bg-emerald-50 transition-all shadow-xs group cursor-pointer">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">👤</span>
+                            <span class="font-bold text-[#004E4A] text-sm group-hover:text-emerald-700 transition-colors">Contactar con un Asesor Humano</span>
+                        </div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            En línea
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-600 mb-3 leading-relaxed">
+                        Atención personalizada directa con nuestro equipo a través de WhatsApp.
+                    </p>
+                    <div class="bg-[#25D366] group-hover:bg-[#20BA5A] text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 text-xs shadow-md transition-all">
+                        <img src="assets/icons/whatsapp/whatsapp.svg" alt="WhatsApp" class="w-4 h-4 invert">
+                        <span>Chatear con Asesor Humano</span>
+                    </div>
+                </a>
+            </div>
+
+            <div class="text-center pt-1 border-t border-slate-100">
+                <button onclick="closeOptionsModal()" class="text-xs text-slate-400 hover:text-slate-600 font-semibold transition-colors py-1">
+                    Continuar navegando en la tienda
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Turf.js para validación de polígonos -->
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+    <!-- Scripts de Lógica Principal -->
+    <script src="js/address-validator.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/checkout.js"></script>
+    <script src="js/app.js"></script>
+
+    <!-- UI Helpers -->
+    <script>
+        function openTcModal(e) {
+            if(e) e.preventDefault();
+            document.getElementById('modal-tc').classList.remove('hidden');
+        }
+        function closeTcModal() {
+            document.getElementById('modal-tc').classList.add('hidden');
+        }
+        function openReclamarModal(e) {
+            if(e) { e.preventDefault(); e.stopPropagation(); }
+            document.getElementById('modal-reclamar').classList.remove('hidden');
+        }
+        function closeReclamarModal() {
+            document.getElementById('modal-reclamar').classList.add('hidden');
+        }
+
+        // ============================================================
+        // MODAL COMPROBAR DOMICILIO GRATIS & CACHÉ
+        // ============================================================
+        function openCheckCoverageModal() {
+            const modal = document.getElementById('modal-check-coverage');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+
+            // Cargar datos cacheados si existen
+            const cached = window.AddressValidator?.getCachedData();
+            if (cached) {
+                const sel = document.getElementById('coverage-select-municipio');
+                const dir = document.getElementById('coverage-input-direccion');
+                if (sel && cached.municipio) sel.value = cached.municipio;
+                if (dir && cached.direccion) dir.value = cached.direccion;
+                if (cached.isFreeShipping) {
+                    renderCoverageResult({
+                        status: 'ok',
+                        isFreeShipping: true,
+                        barrio: cached.barrio,
+                        municipio: cached.municipio,
+                        direccion: cached.direccion
+                    });
+                }
+            }
+        }
+
+        function closeCheckCoverageModal() {
+            const modal = document.getElementById('modal-check-coverage');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function handleCheckCoverageSubmit(e) {
+            e.preventDefault();
+            const sel = document.getElementById('coverage-select-municipio');
+            const dir = document.getElementById('coverage-input-direccion');
+            const btn = document.getElementById('btn-coverage-check');
+            const resultBox = document.getElementById('coverage-result-container');
+
+            if (!sel || !dir || !sel.value || !dir.value.trim()) return;
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<span class="inline-block animate-spin">⏳</span><span>Verificando zona catastral...</span>`;
+            }
+
+            if (resultBox) {
+                resultBox.innerHTML = `
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
+                        <span class="inline-block animate-spin text-base">⏳</span>
+                        <span>Consultando polígonos catastrales y promociones activas...</span>
+                    </div>
+                `;
+            }
+
+            if (window.AddressValidator && typeof window.AddressValidator.checkCoverage === 'function') {
+                const res = await window.AddressValidator.checkCoverage(sel.value, dir.value);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<span>🔍</span><span>Comprobar Cobertura</span>`;
+                }
+                renderCoverageResult(res);
+            } else {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<span>🔍</span><span>Comprobar Cobertura</span>`;
+                }
+            }
+        }
+
+        function renderCoverageResult(res) {
+            const resultBox = document.getElementById('coverage-result-container');
+            if (!resultBox) return;
+
+            if (res.isFreeShipping) {
+                resultBox.innerHTML = `
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-fade-in">
+                        <span class="text-2xl mt-0.5">🎉</span>
+                        <div>
+                            <p class="text-sm font-black text-emerald-800 leading-snug">¡Felicidades! Tu dirección aplica para Domicilio Gratis</p>
+                            <p class="text-xs text-emerald-700 font-medium mt-0.5">Válido en productos seleccionados.</p>
+                            ${res.barrio ? `<p class="text-[11px] text-emerald-600 mt-1">Barrio detectado: <strong>${res.barrio}</strong> (${res.municipio})</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="mt-3 flex gap-2">
+                        <button onclick="closeCheckCoverageModal(); window.showCatalogView(); setCategory('promo_gratis');" class="w-full bg-[#54B435] hover:bg-[#46962A] text-white text-xs font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5">
+                            <span>🎁</span>
+                            <span>Ver Productos con Domicilio Gratis</span>
+                        </button>
+                    </div>
+                `;
+            } else {
+                resultBox.innerHTML = `
+                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-fade-in">
+                        <span class="text-2xl mt-0.5">🚚</span>
+                        <div>
+                            <p class="text-sm font-bold text-amber-900 leading-snug">Costo de envío estándar: $12.000 COP</p>
+                            <p class="text-xs text-amber-800 mt-0.5">Tu zona ${res.barrio ? `(${res.barrio})` : ''} no cuenta actualmente con promoción de Domicilio Gratis por barrio.</p>
+                            <p class="text-[11px] text-amber-700 mt-1.5 font-medium">💡 <em>¡Obtén Domicilio GRATIS en cualquier compra superior a $150.000 COP!</em></p>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex gap-2">
+                        <button onclick="closeCheckCoverageModal(); window.showCatalogView();" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-2.5 px-4 rounded-xl transition-all">
+                            Ir a Explorar Catálogo
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // ============================================================
+        // LÓGICA DE ASISTENCIA WHATSAPP (573053862555) & BURBUJA CONTRAÍBLE
+        // ============================================================
+        let welcomeTimer = null;
+
+        function autoTransitionToBubble() {
+            if (welcomeTimer) clearTimeout(welcomeTimer);
+            const welcomeModal = document.getElementById('modal-cx-welcome');
+            if (welcomeModal) {
+                welcomeModal.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => {
+                    welcomeModal.classList.add('hidden');
+                    const bubble = document.getElementById('wa-floating-container');
+                    if (bubble) bubble.classList.remove('hidden');
+                }, 350);
+            }
+        }
+
+        function toggleWaBubble(e) {
+            if (e) e.stopPropagation();
+            const btn = document.getElementById('wa-float-btn');
+            const icon = document.getElementById('wa-toggle-icon');
+            if (!btn || !icon) return;
+
+            const isCollapsed = btn.classList.toggle('is-collapsed');
+            // Cuando está contraído: icono '<' para re-expandir hacia la izquierda
+            // Cuando está expandido: icono '>' para contraer
+            icon.textContent = isCollapsed ? '<' : '>';
+        }
+
+        function openOptionsModal() {
+            const optionsModal = document.getElementById('modal-cx-options');
+            if (optionsModal) optionsModal.classList.remove('hidden');
+        }
+
+        function closeOptionsModal() {
+            const optionsModal = document.getElementById('modal-cx-options');
+            if (optionsModal) optionsModal.classList.add('hidden');
+        }
+
+        // Transición automática a burbuja flotante tras 4 segundos al cargar
+        document.addEventListener('DOMContentLoaded', () => {
+            welcomeTimer = setTimeout(() => {
+                autoTransitionToBubble();
+            }, 4000);
+        });
+    </script>
+</body>
+</html>
